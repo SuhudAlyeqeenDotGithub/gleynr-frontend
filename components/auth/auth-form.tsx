@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import {
-  signInWithEmail,
-  signInWithGoogle,
-  signUpWithEmail,
-} from "@/lib/auth/auth";
+import { signInWithGoogle } from "@/lib/auth/auth";
 import { Logo } from "@/components/general/Logo";
-
-type Mode = "signin" | "signup";
 
 const ERROR_MESSAGES: Record<string, string> = {
   "auth/invalid-email": "Enter a valid email address.",
@@ -58,16 +52,10 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AuthForm = () => {
+export const useAuthAction = () => {
   const router = useRouter();
-  const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState<"email" | "google" | null>(null);
-  const isSignUp = mode === "signup";
-  const busy = loading !== null;
 
   const run = async (
     kind: "email" | "google",
@@ -77,50 +65,48 @@ const AuthForm = () => {
     setLoading(kind);
     try {
       await action();
-      router.push("/");
+      router.push("/main");
     } catch (err) {
       setError(getErrorMessage(err));
       setLoading(null);
     }
   };
 
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!email.trim() || !password)
-      return setError("Enter your email and password.");
-    if (isSignUp && password !== confirm)
-      return setError("Passwords do not match.");
-    run("email", () =>
-      isSignUp
-        ? signUpWithEmail(email.trim(), password)
-        : signInWithEmail(email.trim(), password),
-    );
+  return {
+    error,
+    loading,
+    run,
+    signInWithGoogle: () => run("google", signInWithGoogle),
   };
+};
 
-  const switchMode = () => {
-    setMode(isSignUp ? "signin" : "signup");
-    setError("");
-    setConfirm("");
-  };
-
+export const AuthLayout = ({
+  title,
+  subtitle,
+  loading,
+  onGoogle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  loading: "email" | "google" | null;
+  onGoogle: () => void;
+  children: ReactNode;
+}) => {
   return (
     <main className="auth-page">
       <section className="auth-card">
         <div className="auth-logo">
           <Logo dark={false} />
         </div>
-        <h1>{isSignUp ? "Create your account" : "Welcome back"}</h1>
-        <p className="auth-sub">
-          {isSignUp
-            ? "Start tracking building analytics with Gleynr."
-            : "Sign in to your Gleynr dashboard."}
-        </p>
+        <h1>{title}</h1>
+        <p className="auth-sub">{subtitle}</p>
 
         <button
           type="button"
           className="button secondary auth-wide"
-          disabled={busy}
-          onClick={() => run("google", signInWithGoogle)}
+          disabled={loading !== null}
+          onClick={onGoogle}
         >
           {loading === "google" ? (
             <Loader2 size={14} className="auth-spin" />
@@ -134,64 +120,8 @@ const AuthForm = () => {
           <span>or</span>
         </div>
 
-        <form className="form-stack" onSubmit={handleSubmit} noValidate>
-          <label>
-            Email address
-            <input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              disabled={busy}
-            />
-          </label>
-          <label>
-            Password
-            <input
-              type="password"
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={busy}
-            />
-          </label>
-          {isSignUp && (
-            <label>
-              Confirm password
-              <input
-                type="password"
-                autoComplete="new-password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                disabled={busy}
-              />
-            </label>
-          )}
-          {error && (
-            <div className="form-error" role="alert">
-              {error}
-            </div>
-          )}
-          <button
-            type="submit"
-            className="button primary auth-wide"
-            disabled={busy}
-          >
-            {loading === "email" && <Loader2 size={14} className="auth-spin" />}
-            {isSignUp ? "Create account" : "Sign in"}
-          </button>
-        </form>
-
-        <p className="auth-switch">
-          {isSignUp ? "Already have an account?" : "New to Gleynr?"}{" "}
-          <button type="button" onClick={switchMode} disabled={busy}>
-            {isSignUp ? "Sign in" : "Create an account"}
-          </button>
-        </p>
+        {children}
       </section>
     </main>
   );
 };
-
-export default AuthForm;

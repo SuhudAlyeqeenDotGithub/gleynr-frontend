@@ -182,6 +182,32 @@
   color: var(--foreground);
   outline-color: var(--primary);
 }
+.form-input-password {
+  position: relative;
+}
+.form-stack .form-input-password input {
+  padding-right: 44px;
+}
+.form-input-password-toggle {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.form-input-password-toggle:hover {
+  color: var(--foreground);
+}
+.form-input-password-toggle:disabled {
+  cursor: not-allowed;
+}
 .upload-zone {
   display: flex;
   flex-direction: column;
