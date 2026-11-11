@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { z } from "zod";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { AuthLayout, useAuthAction } from "@/components/auth/auth-form";
-import { signInWithEmail } from "@/lib/auth/auth";
+
 import { FormInput } from "@/lib/forms/form-input";
 import {
   userSignInSchema,
@@ -16,7 +17,7 @@ export default function SignInForm() {
   const [errors, setErrors] = useState<
     Partial<Record<keyof UserSignIn, string>>
   >({});
-  const { error, loading, run, signInWithGoogle } = useAuthAction();
+  const { error, loading, signInWithGoogle, signInWithEmail } = useAuthAction();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -25,18 +26,16 @@ export default function SignInForm() {
       email: values.email.trim(),
     });
     if (!result.success) {
-      const fieldErrors = result.error.flatten().fieldErrors;
+      const fieldErrors = z.flattenError(result.error).fieldErrors;
       setErrors({
-        email: fieldErrors.email && "Enter a valid email address.",
-        password:
-          fieldErrors.password && "Password must be at least 8 characters.",
+        email: fieldErrors.email && fieldErrors.email[0],
+        password: fieldErrors.password && fieldErrors.password[0],
       });
       return;
     }
     setErrors({});
-    void run("email", () =>
-      signInWithEmail(result.data.email, result.data.password),
-    );
+
+    signInWithEmail(result.data.email, result.data.password);
   };
 
   return (

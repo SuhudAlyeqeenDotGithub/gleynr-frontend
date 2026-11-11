@@ -10,6 +10,7 @@ import {
   userSignUpSchema,
   type UserSignUp,
 } from "@/lib/schemaAndTypes/zod/auth";
+import { z } from "zod";
 
 export default function SignUpForm() {
   const [values, setValues] = useState<UserSignUp>({
@@ -20,7 +21,7 @@ export default function SignUpForm() {
   const [errors, setErrors] = useState<
     Partial<Record<keyof UserSignUp, string>>
   >({});
-  const { error, loading, run, signInWithGoogle } = useAuthAction();
+  const { error, loading, signInWithGoogle, signUpWithEmail } = useAuthAction();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -29,19 +30,16 @@ export default function SignUpForm() {
       email: values.email.trim(),
     });
     if (!result.success) {
-      const fieldErrors = result.error.flatten().fieldErrors;
+      const fieldErrors = z.flattenError(result.error).fieldErrors;
       setErrors({
-        email: fieldErrors.email && "Enter a valid email address.",
-        password:
-          fieldErrors.password && "Password must be at least 8 characters.",
+        email: fieldErrors.email && fieldErrors.email[0],
+        password: fieldErrors.password && fieldErrors.password[0],
         confirmPassword: fieldErrors.confirmPassword?.[0],
       });
       return;
     }
     setErrors({});
-    void run("email", () =>
-      signUpWithEmail(result.data.email, result.data.password),
-    );
+    void signUpWithEmail(result.data.email, result.data.password);
   };
 
   return (

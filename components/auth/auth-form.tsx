@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { signInWithGoogle } from "@/lib/auth/auth";
+import { signInWithGoogle, signInWithEmail, signUpWithEmail } from "@/lib/auth/auth";
 import { Logo } from "@/components/general/Logo";
 
 const ERROR_MESSAGES: Record<string, string> = {
@@ -77,6 +77,10 @@ export const useAuthAction = () => {
     loading,
     run,
     signInWithGoogle: () => run("google", signInWithGoogle),
+    signInWithEmail: (email: string, password: string) =>
+      run("email", () => signInWithEmail(email, password)),
+    signUpWithEmail: (email: string, password: string) =>
+      run("email", () => signUpWithEmail(email, password))
   };
 };
 
