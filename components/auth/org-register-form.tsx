@@ -71,6 +71,7 @@ export default function OrgRegisterForm() {
     <OrgAuthLayout
       title="Register your organisation"
       subtitle="Set up your organisation and administrator details."
+      cardColCount={2}
     >
       <p className="org-auth-demo">
         Demo only. Submitting this form will not create an organisation.

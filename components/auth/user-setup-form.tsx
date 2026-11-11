@@ -1,27 +1,31 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { z } from "zod";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { AuthLayout, useAuthAction } from "@/components/auth/auth-form";
-
+import { signUpWithEmail } from "@/lib/auth/auth";
 import { FormInput } from "@/lib/forms/form-input";
 import {
-  userSignInSchema,
-  type UserSignIn,
+  userSignUpSchema,
+  type UserSignUp,
 } from "@/lib/schemaAndTypes/zod/auth";
+import { z } from "zod";
 
-export default function SignInForm() {
-  const [values, setValues] = useState<UserSignIn>({ email: "", password: "" });
+export default function UserSetUpForm() {
+  const [values, setValues] = useState<UserSignUp>({
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [errors, setErrors] = useState<
-    Partial<Record<keyof UserSignIn, string>>
+    Partial<Record<keyof UserSignUp, string>>
   >({});
-  const { error, loading, signInWithGoogle, signInWithEmail } = useAuthAction();
+  const { error, loading, signInWithGoogle, signUpWithEmail } = useAuthAction();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const result = userSignInSchema.safeParse({
+    const result = userSignUpSchema.safeParse({
       ...values,
       email: values.email.trim(),
     });
@@ -30,18 +34,18 @@ export default function SignInForm() {
       setErrors({
         email: fieldErrors.email && fieldErrors.email[0],
         password: fieldErrors.password && fieldErrors.password[0],
+        confirmPassword: fieldErrors.confirmPassword?.[0],
       });
       return;
     }
     setErrors({});
-
-    signInWithEmail(result.data.email, result.data.password);
+    void signUpWithEmail(result.data.email, result.data.password);
   };
 
   return (
     <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your Gleynr dashboard."
+      title="Set up your account"
+      subtitle="You have been invited to set up your account."
       loading={loading}
       onGoogle={signInWithGoogle}
     >
@@ -61,13 +65,24 @@ export default function SignInForm() {
         <FormInput
           label="Password"
           type="password"
-          autoComplete="current-password"
+          autoComplete="new-password"
           value={values.password}
           onChange={(event) =>
             setValues({ ...values, password: event.target.value })
           }
           disabled={loading !== null}
           error={errors.password}
+        />
+        <FormInput
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          value={values.confirmPassword}
+          onChange={(event) =>
+            setValues({ ...values, confirmPassword: event.target.value })
+          }
+          disabled={loading !== null}
+          error={errors.confirmPassword}
         />
         {error && (
           <div className="form-error" role="alert">
@@ -80,11 +95,12 @@ export default function SignInForm() {
           disabled={loading !== null}
         >
           {loading === "email" && <Loader2 size={14} className="auth-spin" />}
-          Sign in
+          Create account
         </button>
       </form>
       <p className="auth-switch">
-        New to Gleynr? <Link href="/auth/user/signup">Create an account</Link>
+        Already set up your account?{" "}
+        <Link href="/auth/user/signin">Sign in</Link>
       </p>
     </AuthLayout>
   );
