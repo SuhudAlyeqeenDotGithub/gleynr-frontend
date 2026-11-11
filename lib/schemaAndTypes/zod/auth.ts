@@ -37,13 +37,35 @@ export const orgSignInSchema = z.object({
 
 export type OrgSignIn = z.infer<typeof orgSignInSchema>;
 
-export const orgRegistrationSchema = z.object({
-  orgEmail: emailSchema,
-  orgPhone: z.string().min(10),
-  orgName: z.string().min(2),
-  orgCountry: z.string().min(2),
-  adminEmail: emailSchema,
-  adminFullName: z.string().min(2),
-});
+export const orgRegistrationSchema = z
+  .object({
+    orgEmail: emailSchema,
+    orgPhone: z
+      .string()
+      .min(10, "Enter a phone number with at least 10 characters."),
+    orgName: z
+      .string()
+      .min(2, "Enter an organisation name with at least 2 characters."),
+    orgCountryCode: z.string().min(2, "Select an organisation country."),
+    adminEmail: emailSchema,
+    adminFullName: z
+      .string()
+      .min(2, "Enter an administrator name with at least 2 characters."),
+    acceptedTermOfService: z.literal(true, {
+      error: "You must accept the terms of service.",
+    }),
+    acknowledgedPrivacyPolicy: z.literal(true, {
+      error: "You must accept the privacy policy.",
+    }),
+  })
+  .refine(
+    (data) =>
+      data.adminEmail.trim().toLowerCase() !==
+      data.orgEmail.trim().toLowerCase(),
+    {
+      message: "Admin email must be different from organization email.",
+      path: ["adminEmail"],
+    },
+  );
 
 export type OrgSignUp = z.infer<typeof orgRegistrationSchema>;

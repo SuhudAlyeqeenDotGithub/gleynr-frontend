@@ -1,4 +1,4 @@
-const countries = [
+export const countries = [
   {
     name: "Aruba",
     code: "AW",

@@ -72,6 +72,82 @@
 .auth-spin {
   animation: auth-spin 0.8s linear infinite;
 }
+.org-auth-card {
+  min-width: 0;
+  max-width: 480px;
+}
+.org-registration select {
+  min-width: 0;
+  width: 100%;
+}
+.org-auth-demo,
+.org-auth-note {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.org-auth-demo {
+  padding: 10px 12px;
+  border-left: 3px solid var(--primary);
+  background: var(--raised);
+}
+.org-auth-resend {
+  margin: 16px 0;
+  text-align: center;
+}
+.org-auth-resend button,
+.org-auth-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font-weight: 650;
+  cursor: pointer;
+}
+.org-auth-resend button:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+.org-auth-success {
+  color: var(--foreground);
+}
+.org-auth-success p {
+  color: var(--muted);
+}
+.org-registration fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.org-registration legend {
+  margin-bottom: 12px;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+.org-registration .org-consent {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 400;
+}
+.org-registration .org-consent input {
+  flex: 0 0 auto;
+  margin: 2px 0 0;
+  accent-color: var(--primary);
+}
+.org-auth-field .form-error,
+.org-consent-field .form-error {
+  margin-top: 6px;
+}
 @keyframes auth-spin {
   to {
     transform: rotate(360deg);
