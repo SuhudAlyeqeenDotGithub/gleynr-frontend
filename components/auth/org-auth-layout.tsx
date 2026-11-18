@@ -6,7 +6,9 @@ export function OrgAuthLayout({
   subtitle,
   children,
   cardColCount = 1,
+  error,
 }: {
+  error?: string;
   title: string;
   subtitle: string;
   children: ReactNode;
@@ -22,6 +24,7 @@ export function OrgAuthLayout({
         </div>
         <h1>{title}</h1>
         <p className="auth-sub">{subtitle}</p>
+        {error && <div className="form-error mb-2">{error}</div>}
         {children}
       </section>
     </main>

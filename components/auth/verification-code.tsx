@@ -6,8 +6,8 @@ import { FormInput } from "@/lib/forms/form-input";
 
 type VerificationCodeProps = {
   email: string;
-  onVerify: (code: string) => Promise<"success" | "invalid" | "expired">;
-  onResend: () => Promise<void>;
+  onVerify: (code: string, email: string) => Promise<void>;
+  onResend: (email: string) => Promise<void>;
   minLength?: number;
   resendCooldownSeconds?: number;
 };
@@ -39,7 +39,7 @@ export function VerificationCode({
       setRemaining(seconds);
       if (seconds === 0) setDeadline(null);
     };
-    
+
     updateRemaining();
     const timer = setInterval(updateRemaining, 1000);
     return () => clearInterval(timer);
@@ -54,18 +54,13 @@ export function VerificationCode({
     setError("");
     setStatus("verifying");
     try {
-      const result = await onVerify(code);
-      if (result === "success") {
-        setStatus("success");
-        return;
-      }
+      await onVerify(code, email);
+    } catch (error: unknown) {
       setError(
-        result === "expired"
-          ? "This code has expired. Request a new code."
-          : "This code is invalid. Try again.",
+        error instanceof Error && error.message
+          ? error.message
+          : "Could not verify the code. Try again.",
       );
-    } catch {
-      setError("Could not verify the code. Try again.");
     }
     setStatus("idle");
   };
@@ -74,24 +69,28 @@ export function VerificationCode({
     setError("");
     setStatus("resending");
     try {
-      await onResend();
+      await onResend(email);
       setCode("");
       setRemaining(resendCooldownSeconds);
       setDeadline(Date.now() + resendCooldownSeconds * 1000);
-    } catch {
-      setError("Could not request a new code. Try again.");
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error && error.message
+          ? error.message
+          : "Could not request a new code. Try again.",
+      );
     }
     setStatus("idle");
   };
 
-  if (status === "success") {
-    return (
-      <div className="org-auth-success" role="status">
-        <strong>Code verified</strong>
-        <p>This is a simulation. You have not been signed in.</p>
-      </div>
-    );
-  }
+  // if (status === "success") {
+  //   return (
+  //     <div className="org-auth-success" role="status">
+  //       <strong>Code verified</strong>
+  //       <p>The verification code has been successfully verified.</p>
+  //     </div>
+  //   );
+  // }
 
   const busy = status !== "idle";
   return (
@@ -103,11 +102,10 @@ export function VerificationCode({
         <FormInput
           label="Verification code"
           type="text"
-          inputMode="numeric"
           autoComplete="one-time-code"
           value={code}
           onChange={(event) => {
-            setCode(event.target.value.replace(/\D/g, ""));
+            setCode(event.target.value);
             setError("");
           }}
           disabled={busy}

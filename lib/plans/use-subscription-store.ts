@@ -39,7 +39,7 @@ export const useSubscriptionStore = () => {
 
     const next: SubscriptionRecord = {
       id: `sub-${now.getTime()}`,
-      organisationId: current.organisationId,
+      orgId: current.orgId,
       planId: target.id,
       plan: target.name,
       type: target.type,

@@ -15,7 +15,7 @@ export type GenderGroup = z.infer<typeof genderGroupSchema>;
 // area schema and type
 export const areaSchema = z.object({
   id: z.string(),
-  organisationId: z.string(),
+  orgId: z.string(),
   floorId: z.string(),
   name: z.string(),
   type: z.string(),

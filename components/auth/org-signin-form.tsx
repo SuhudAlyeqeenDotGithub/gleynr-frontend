@@ -3,13 +3,19 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { sendCode } from "@/lib/auth/verification";
+
+const handleVerifyCode = async (code: string, email: string) => {
+  // Implement the verification logic here
+};
+
+const handleResendCode = async (email: string) => {
+  await sendCode(email);
+};
 import { z } from "zod";
 import { OrgAuthLayout } from "@/components/auth/org-auth-layout";
 import { VerificationCode } from "@/components/auth/verification-code";
-import {
-  simulateCodeRequest,
-  simulateCodeVerification,
-} from "@/lib/auth/org-simulation";
+
 import { FormInput } from "@/lib/forms/form-input";
 import { orgSignInSchema, type OrgSignIn } from "@/lib/schemaAndTypes/zod/auth";
 
@@ -34,7 +40,7 @@ export default function OrgSignInForm() {
     setError("");
     setSending(true);
     try {
-      await simulateCodeRequest();
+      await sendCode(values.orgEmail);
       setVerificationEmail(result.data.orgEmail);
     } catch {
       setError("Could not request a code. Try again.");
@@ -56,8 +62,8 @@ export default function OrgSignInForm() {
         <>
           <VerificationCode
             email={verificationEmail}
-            onVerify={simulateCodeVerification}
-            onResend={simulateCodeRequest}
+            onVerify={handleVerifyCode}
+            onResend={handleResendCode}
           />
 
           <p className="auth-switch">

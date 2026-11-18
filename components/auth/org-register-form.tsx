@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import type { OrgRegistrationSteps } from "@/lib/auth/verification";
+import { verifyCode, sendCode } from "@/lib/auth/verification";
 import Link from "next/link";
-import { z } from "zod";
+import { set, z } from "zod";
 import { OrgAuthLayout } from "@/components/auth/org-auth-layout";
 import { countries } from "@/lib/data/countries";
 import { FormInput } from "@/lib/forms/form-input";
@@ -10,6 +12,7 @@ import {
   orgRegistrationSchema,
   type OrgSignUp,
 } from "@/lib/schemaAndTypes/zod/auth";
+import { VerificationCode } from "./verification-code";
 
 type RegistrationValues = Omit<
   OrgSignUp,
@@ -25,21 +28,24 @@ const sortedCountries = [...countries].sort((first, second) =>
 
 export default function OrgRegisterForm() {
   const [values, setValues] = useState<RegistrationValues>({
-    orgName: "",
-    orgEmail: "",
-    orgPhone: "",
-    orgCountryCode: "",
-    adminFullName: "",
-    adminEmail: "",
-    acceptedTermOfService: false,
-    acknowledgedPrivacyPolicy: false,
+    orgName: "SuhudCorp",
+    orgEmail: "alyekeeniy@gmail.com",
+    orgPhone: "07840262030",
+    orgCountryCode: "GB",
+    adminFullName: "Suhud",
+    adminEmail: "alyekeeniybackup@gmail.com",
+    acceptedTermOfService: true,
+    acknowledgedPrivacyPolicy: true,
   });
   const [errors, setErrors] = useState<
     Partial<Record<keyof RegistrationValues, string>>
   >({});
-  const [complete, setComplete] = useState(false);
+  const [error, setError] = useState<string>("");
+  const [step, setStep] = useState<OrgRegistrationSteps>("Detail Entry");
 
-  const handleSubmit = (event: FormEvent) => {
+  const submitDetails = async (event: FormEvent) => {
+    if (step !== "Detail Entry") return;
+
     event.preventDefault();
     const result = orgRegistrationSchema.safeParse({
       ...values,
@@ -64,33 +70,89 @@ export default function OrgRegisterForm() {
       return;
     }
     setErrors({});
-    setComplete(true);
+    setError("");
+
+    handleSendCode(values.adminEmail, "Admin Code Sent");
   };
+
+  const handleVerifyCode = async (
+    code: string,
+    email: string,
+    currentStep: OrgRegistrationSteps,
+  ) => {
+    if (!["Enter Admin Code", "Enter Org Code"].includes(currentStep)) return;
+
+    try {
+      setError("");
+      await verifyCode(code, email);
+
+      if (currentStep === "Enter Admin Code") {
+        handleSendCode(values.orgEmail, "Org Code Sent");
+      } else if (currentStep === "Enter Org Code") {
+        setStep("Verification Complete");
+      }
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to verify code";
+      setError(message);
+    }
+  };
+
+  const handleSendCode = async (
+    email: string,
+    nextStep: OrgRegistrationSteps,
+  ) => {
+    setError("");
+    try {
+      await sendCode(email);
+      setStep(nextStep);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to send verification code";
+      setError(message);
+    }
+  };
+
+  const handleResendCode = async (email: string) => {
+    setError("");
+    await sendCode(email);
+  };
+
+  const Instruction = ({
+    onContinue,
+    title,
+    message,
+    hideContinue = false,
+  }: {
+    title: string;
+    message: string;
+    onContinue: () => void;
+    hideContinue?: boolean;
+  }) => (
+    <div className="org-auth-success" role="status">
+      <strong>{title}</strong>
+      <p className="mb-5">{message}</p>
+      {!hideContinue && (
+        <button className="button primary auth-wide" onClick={onContinue}>
+          Continue
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <OrgAuthLayout
       title="Register your organisation"
       subtitle="Set up your organisation and administrator details."
       cardColCount={2}
+      error={error}
     >
-      <p className="org-auth-demo">
-        Demo only. Submitting this form will not create an organisation.
-      </p>
-      {complete ? (
-        <div className="org-auth-success" role="status">
-          <strong>Registration details validated</strong>
-          <p>
-            No account was created. Organisation registration is not connected
-            yet.
-          </p>
-          <p className="auth-switch">
-            <Link href="/auth/org/signin">Organisation sign in</Link>
-          </p>
-        </div>
-      ) : (
+      {step === "Detail Entry" && (
         <form
           className="form-stack org-registration"
-          onSubmit={handleSubmit}
+          onSubmit={submitDetails}
           noValidate
         >
           <fieldset>
@@ -238,6 +300,42 @@ export default function OrgRegisterForm() {
             Already registered? <Link href="/auth/org/signin">Sign in</Link>
           </p>
         </form>
+      )}
+      {step === "Admin Code Sent" && (
+        <Instruction
+          title="Verify Admin Email"
+          message={`A code has been sent to ${values.adminEmail} for verification. Continue to enter the code.`}
+          onContinue={() => setStep("Enter Admin Code")}
+        />
+      )}
+      {step === "Enter Admin Code" && (
+        <VerificationCode
+          email={values.adminEmail}
+          onVerify={(code) => handleVerifyCode(code, values.adminEmail, step)}
+          onResend={(email) => handleResendCode(email)}
+        />
+      )}
+      {step === "Org Code Sent" && (
+        <Instruction
+          title="Verify Organisation Email"
+          message={`A code has been sent to ${values.orgEmail} for verification. Continue to enter the code.`}
+          onContinue={() => setStep("Enter Org Code")}
+        />
+      )}
+      {step === "Enter Org Code" && (
+        <VerificationCode
+          email={values.orgEmail}
+          onVerify={(code) => handleVerifyCode(code, values.orgEmail, step)}
+          onResend={(email) => handleResendCode(email)}
+        />
+      )}
+      {step === "Verification Complete" && (
+        <Instruction
+          title="Verification Complete"
+          message="Emails have been successfully verified. You will be redirected shortly."
+          onContinue={() => {}}
+          hideContinue={true}
+        />
       )}
     </OrgAuthLayout>
   );

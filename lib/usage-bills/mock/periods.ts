@@ -59,7 +59,7 @@ const buildUsage = (
   const scaled = (value: number) => Math.round(value * factor);
   return {
     id: `usage-${id}`,
-    organisationId: "org-demo",
+    orgId: "org-demo",
     billId: `bill-${id}`,
     periodStart: start.toISOString(),
     periodEnd: end.toISOString(),

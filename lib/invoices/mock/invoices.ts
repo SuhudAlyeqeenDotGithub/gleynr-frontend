@@ -193,7 +193,7 @@ export const createMockInvoices = (): InvoiceRecord[] => {
 
     return {
       id,
-      organisationId: "org-demo",
+      orgId: "org-demo",
       billId: `bill-${id}`,
       number: `INV-${invoiceDate.getFullYear()}-${String(total - index).padStart(4, "0")}`,
       period: periodStart.toLocaleDateString("en-GB", {

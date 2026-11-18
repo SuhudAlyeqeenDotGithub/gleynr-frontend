@@ -3,7 +3,7 @@ import { currencies } from "./usage";
 
 export const billSchema = z.object({
   id: z.string(),
-  organisationId: z.string(),
+  orgId: z.string(),
   subscriptionId: z.string(),
   periodStartDate: z.date(),
   periodEndDate: z.date(),

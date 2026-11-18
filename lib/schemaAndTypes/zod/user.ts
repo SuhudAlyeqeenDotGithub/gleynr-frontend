@@ -13,6 +13,7 @@ export const permissionObject = z.object({
 export type Permission = z.infer<typeof permissionObject>;
 
 export const recordPermissionSchema = z.object({
+  tab: z.enum(Object.keys(tabPermissionSettings)),
   recordId: z.string(),
   permissions: z.array(permissionObject),
 });
@@ -24,7 +25,6 @@ export const tabSchema = z.object({
   displayText: z.string().optional(),
   tab: z.enum(Object.keys(tabPermissionSettings)),
   hasAccess: z.boolean(),
-  recordLevelPermissions: z.array(recordPermissionSchema),
   standalonePermissions: z.array(permissionObject),
 });
 export type Tab = z.infer<typeof tabSchema>;
@@ -32,15 +32,14 @@ export type Tab = z.infer<typeof tabSchema>;
 // user schema and type
 export const userSchema = z.object({
   id: z.string(),
-  organisationId: z.string(),
+  orgId: z.string(),
   email: z.email(),
   uid: z.string().optional(),
   username: z.string().optional(),
-  status: z.enum(["Active", "Inactive"]),
-  accountType: z.enum(["Internal User", "External User", "Organization"]),
-  accessAndPermissions: z.object({
-    tabAccess: z.array(tabSchema),
-  }),
+  accountStatus: z.enum(["Active", "Inactive"]),
+  accountType: z.enum(["Internal User", "External User"]),
+  tabPermissions: z.array(tabSchema),
+  recordLevelPermissions: z.array(recordPermissionSchema),
   createdAt: z.date(),
   invitationStatus: z.enum(["Not invited", "Pending", "Accepted"]),
 });

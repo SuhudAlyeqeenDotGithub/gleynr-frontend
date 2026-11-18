@@ -3,7 +3,7 @@ import { currencies } from "./usage";
 
 export const invoiceSchema = z.object({
   id: z.string(),
-  organisationId: z.string(),
+  orgId: z.string(),
   billId: z.string(),
   chargedDate: z.date(),
   successfulDate: z.date(),

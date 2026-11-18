@@ -2,7 +2,7 @@
 import type { SubscriptionRecord } from "../types";
 
 const base = {
-  organisationId: "org-demo",
+  orgId: "org-demo",
   billingInterval: "Monthly" as const,
 };
 

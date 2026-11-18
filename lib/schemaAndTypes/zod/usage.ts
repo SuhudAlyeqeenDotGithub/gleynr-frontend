@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { da } from "zod/locales";
 
-
 export const usageUnits = ["count", "bytes", "milliseconds"];
 export const usageFields = [
   "databaseStorageBytes",
@@ -17,27 +16,27 @@ export const databaseUsageSchema = z.object({
   operations: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
   aggregations: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
   storageBytes: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
   requestBytes: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
   responseBytes: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
 });
 export type DatabaseUsage = z.infer<typeof databaseUsageSchema>;
@@ -46,24 +45,24 @@ export const backendUsageSchema = z.object({
   requestDuration: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
   requestBytes: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
   responseBytes: z.object({
     unit: z.enum(usageUnits),
     value: z.number(),
-    estimateRate: z.number()
+    estimateRate: z.number(),
   }),
 });
 export type BackendUsage = z.infer<typeof backendUsageSchema>;
 
 export const usageSchema = z.object({
   id: z.string(),
-  organisationId: z.string(),
+  orgId: z.string(),
   billId: z.string(),
   periodStart: z.string(),
   periodEnd: z.string(),
@@ -96,7 +95,7 @@ export const usageRatesSchema = z.object({
 export type UsageRates = z.infer<typeof usageRatesSchema>;
 
 const organisationUsage = {
-  organisationId: "",
+  orgId: "",
   periodStart: "",
   periodEnd: "",
 

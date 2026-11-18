@@ -35,7 +35,7 @@ export type Plan = z.infer<typeof planSchema>;
 // subscription schema and type
 export const subscriptionSchema = z.object({
   id: z.string(),
-  organisationId: z.string(),
+  orgId: z.string(),
   planId: z.string(),
   plan: z.enum(plans),
   type: z.enum(["Freemium", "Premium"]),
