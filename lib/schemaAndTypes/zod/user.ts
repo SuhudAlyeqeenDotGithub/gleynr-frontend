@@ -22,7 +22,7 @@ export type RecordPermission = z.infer<typeof recordPermissionSchema>;
 
 // tab schema and type
 export const tabSchema = z.object({
-  displayText: z.string().optional(),
+  label: z.string().optional(),
   tab: z.enum(Object.keys(tabPermissionSettings)),
   hasAccess: z.boolean(),
   standalonePermissions: z.array(permissionObject),
