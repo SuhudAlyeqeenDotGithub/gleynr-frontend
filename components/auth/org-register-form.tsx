@@ -10,24 +10,17 @@ import { countries } from "@/lib/data/countries";
 import { FormInput } from "@/lib/forms/form-input";
 import {
   orgRegistrationSchema,
-  type OrgSignUp,
+  type OrgRegistration,
 } from "@/lib/schemaAndTypes/zod/auth";
 import { VerificationCode } from "./verification-code";
-
-type RegistrationValues = Omit<
-  OrgSignUp,
-  "acceptedTermOfService" | "acknowledgedPrivacyPolicy"
-> & {
-  acceptedTermOfService: boolean;
-  acknowledgedPrivacyPolicy: boolean;
-};
+import { registerOrg } from "@/lib/auth/org_auth";
 
 const sortedCountries = [...countries].sort((first, second) =>
   first.name.localeCompare(second.name),
 );
 
 export default function OrgRegisterForm() {
-  const [values, setValues] = useState<RegistrationValues>({
+  const [values, setValues] = useState<OrgRegistration>({
     orgName: "SuhudCorp",
     orgEmail: "alyekeeniy@gmail.com",
     orgPhone: "07840262030",
@@ -38,7 +31,7 @@ export default function OrgRegisterForm() {
     acknowledgedPrivacyPolicy: true,
   });
   const [errors, setErrors] = useState<
-    Partial<Record<keyof RegistrationValues, string>>
+    Partial<Record<keyof OrgRegistration, string>>
   >({});
   const [error, setError] = useState<string>("");
   const [step, setStep] = useState<OrgRegistrationSteps>("Detail Entry");
@@ -90,6 +83,7 @@ export default function OrgRegisterForm() {
         handleSendCode(values.orgEmail, "Org Code Sent");
       } else if (currentStep === "Enter Org Code") {
         setStep("Verification Complete");
+        await handleRegisterOrg(values);
       }
     } catch (error: unknown) {
       const message =
@@ -112,6 +106,16 @@ export default function OrgRegisterForm() {
           ? error.message
           : "Failed to send verification code";
       setError(message);
+    }
+  };
+
+  const handleRegisterOrg = async (data: OrgRegistration) => {
+    try {
+      await registerOrg(data);
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : "Failed to register org",
+      );
     }
   };
 

@@ -3,7 +3,6 @@ import {
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signOut,
 } from "firebase/auth";
 
 import { auth } from "@/lib/firebase/client";

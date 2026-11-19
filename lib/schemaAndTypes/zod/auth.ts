@@ -51,12 +51,16 @@ export const orgRegistrationSchema = z
     adminFullName: z
       .string()
       .min(2, "Enter an administrator name with at least 2 characters."),
-    acceptedTermOfService: z.literal(true, {
-      error: "You must accept the terms of service.",
-    }),
-    acknowledgedPrivacyPolicy: z.literal(true, {
-      error: "You must accept the privacy policy.",
-    }),
+    acceptedTermOfService: z
+      .boolean()
+      .refine((data) => data === true, {
+        message: "You must accept the terms of service.",
+      }),
+    acknowledgedPrivacyPolicy: z
+      .boolean()
+      .refine((data) => data === true, {
+        message: "You must acknowledge the privacy policy.",
+      }),
   })
   .refine(
     (data) =>
@@ -68,4 +72,4 @@ export const orgRegistrationSchema = z
     },
   );
 
-export type OrgSignUp = z.infer<typeof orgRegistrationSchema>;
+export type OrgRegistration = z.infer<typeof orgRegistrationSchema>;
