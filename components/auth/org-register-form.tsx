@@ -2,36 +2,44 @@
 
 import { useState, type FormEvent } from "react";
 import type { OrgRegistrationSteps } from "@/lib/auth/verification";
-import { verifyCode, sendCode } from "@/lib/auth/verification";
+import { sendCode } from "@/lib/auth/verification";
+import { registerOrg } from "@/lib/auth/org_auth";
 import Link from "next/link";
 import { set, z } from "zod";
+import type { OrgRegistrationVerificationData } from "@/lib/schemaAndTypes/zod/auth";
 import { OrgAuthLayout } from "@/components/auth/org-auth-layout";
 import { countries } from "@/lib/data/countries";
 import { FormInput } from "@/lib/forms/form-input";
 import {
-  orgRegistrationSchema,
-  type OrgRegistration,
+  orgRegistrationDetailsSchema,
+  type OrgRegistrationDetails,
 } from "@/lib/schemaAndTypes/zod/auth";
 import { VerificationCode } from "./verification-code";
-import { registerOrg } from "@/lib/auth/org_auth";
+import { delayBy } from "@/lib/general/general";
 
 const sortedCountries = [...countries].sort((first, second) =>
   first.name.localeCompare(second.name),
 );
 
 export default function OrgRegisterForm() {
-  const [values, setValues] = useState<OrgRegistration>({
+  const [values, setValues] = useState<OrgRegistrationDetails>({
     orgName: "SuhudCorp",
     orgEmail: "alyekeeniy@gmail.com",
-    orgPhone: "07840262030",
+    orgPhoneNumber: "07840262030",
     orgCountryCode: "GB",
-    adminFullName: "Suhud",
-    adminEmail: "alyekeeniybackup@gmail.com",
-    acceptedTermOfService: true,
+    registeringAdminName: "Suhud",
+    registeringAdminEmail: "alyekeeniybackup@gmail.com",
+    acceptedTermsOfService: true,
     acknowledgedPrivacyPolicy: true,
   });
+
+  const [verificationData, setVerificationData] =
+    useState<OrgRegistrationVerificationData>({
+      orgVerificationCode: "",
+      registeringAdminVerificationCode: "",
+    });
   const [errors, setErrors] = useState<
-    Partial<Record<keyof OrgRegistration, string>>
+    Partial<Record<keyof OrgRegistrationDetails, string>>
   >({});
   const [error, setError] = useState<string>("");
   const [step, setStep] = useState<OrgRegistrationSteps>("Detail Entry");
@@ -40,24 +48,24 @@ export default function OrgRegisterForm() {
     if (step !== "Detail Entry") return;
 
     event.preventDefault();
-    const result = orgRegistrationSchema.safeParse({
+    const result = orgRegistrationDetailsSchema.safeParse({
       ...values,
       orgName: values.orgName.trim(),
       orgEmail: values.orgEmail.trim(),
-      orgPhone: values.orgPhone.trim(),
-      adminFullName: values.adminFullName.trim(),
-      adminEmail: values.adminEmail.trim(),
+      orgPhoneNumber: values.orgPhoneNumber.trim(),
+      registeringAdminName: values.registeringAdminName.trim(),
+      registeringAdminEmail: values.registeringAdminEmail.trim(),
     });
     if (!result.success) {
       const fieldErrors = z.flattenError(result.error).fieldErrors;
       setErrors({
         orgName: fieldErrors.orgName?.[0],
         orgEmail: fieldErrors.orgEmail?.[0],
-        orgPhone: fieldErrors.orgPhone?.[0],
+        orgPhoneNumber: fieldErrors.orgPhoneNumber?.[0],
         orgCountryCode: fieldErrors.orgCountryCode?.[0],
-        adminFullName: fieldErrors.adminFullName?.[0],
-        adminEmail: fieldErrors.adminEmail?.[0],
-        acceptedTermOfService: fieldErrors.acceptedTermOfService?.[0],
+        registeringAdminName: fieldErrors.registeringAdminName?.[0],
+        registeringAdminEmail: fieldErrors.registeringAdminEmail?.[0],
+        acceptedTermsOfService: fieldErrors.acceptedTermsOfService?.[0],
         acknowledgedPrivacyPolicy: fieldErrors.acknowledgedPrivacyPolicy?.[0],
       });
       return;
@@ -65,57 +73,42 @@ export default function OrgRegisterForm() {
     setErrors({});
     setError("");
 
-    handleSendCode(values.adminEmail, "Admin Code Sent");
+    // handleSendCode(values.registeringAdminEmail);
+    // handleSendCode(values.orgEmail, "Codes Sent");
+
+    setStep("Codes Sent");
   };
 
-  const handleVerifyCode = async (
-    code: string,
-    email: string,
-    currentStep: OrgRegistrationSteps,
+  const registerWithCodes = async (
+    verificationDataObj: OrgRegistrationVerificationData,
   ) => {
-    if (!["Enter Admin Code", "Enter Org Code"].includes(currentStep)) return;
+    if (step !== "Enter Org Code") return;
 
     try {
       setError("");
-      await verifyCode(code, email);
-
-      if (currentStep === "Enter Admin Code") {
-        handleSendCode(values.orgEmail, "Org Code Sent");
-      } else if (currentStep === "Enter Org Code") {
-        setStep("Verification Complete");
-        await handleRegisterOrg(values);
-      }
+      await registerOrg({ ...values, ...verificationDataObj });
+      setStep("Verification Complete");
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "Failed to verify code";
+        error instanceof Error ? error.message : "Failed to register org";
       setError(message);
     }
   };
 
   const handleSendCode = async (
     email: string,
-    nextStep: OrgRegistrationSteps,
+    nextStep?: OrgRegistrationSteps,
   ) => {
     setError("");
     try {
       await sendCode(email);
-      setStep(nextStep);
+      if (nextStep) setStep(nextStep);
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : "Failed to send verification code";
       setError(message);
-    }
-  };
-
-  const handleRegisterOrg = async (data: OrgRegistration) => {
-    try {
-      await registerOrg(data);
-    } catch (error: unknown) {
-      setError(
-        error instanceof Error ? error.message : "Failed to register org",
-      );
     }
   };
 
@@ -128,11 +121,13 @@ export default function OrgRegisterForm() {
     onContinue,
     title,
     message,
+    onBack,
     hideContinue = false,
   }: {
     title: string;
     message: string;
     onContinue: () => void;
+    onBack?: () => void;
     hideContinue?: boolean;
   }) => (
     <div className="org-auth-success" role="status">
@@ -142,7 +137,15 @@ export default function OrgRegisterForm() {
         <button className="button primary auth-wide" onClick={onContinue}>
           Continue
         </button>
-      )}
+      )}{" "}
+      <div className="mt-5">
+        {" "}
+        {onBack && (
+          <button className="button secondary" onClick={onBack}>
+            Back
+          </button>
+        )}
+      </div>
     </div>
   );
 
@@ -184,11 +187,11 @@ export default function OrgRegisterForm() {
               label="Organisation phone"
               type="tel"
               autoComplete="tel"
-              value={values.orgPhone}
+              value={values.orgPhoneNumber}
               onChange={(event) =>
-                setValues({ ...values, orgPhone: event.target.value })
+                setValues({ ...values, orgPhoneNumber: event.target.value })
               }
-              error={errors.orgPhone}
+              error={errors.orgPhoneNumber}
             />
             <div className="org-auth-field">
               <label htmlFor="org-country">
@@ -225,21 +228,27 @@ export default function OrgRegisterForm() {
             <FormInput
               label="Administrator full name"
               autoComplete="name"
-              value={values.adminFullName}
+              value={values.registeringAdminName}
               onChange={(event) =>
-                setValues({ ...values, adminFullName: event.target.value })
+                setValues({
+                  ...values,
+                  registeringAdminName: event.target.value,
+                })
               }
-              error={errors.adminFullName}
+              error={errors.registeringAdminName}
             />
             <FormInput
               label="Administrator email"
               type="email"
               autoComplete="email"
-              value={values.adminEmail}
+              value={values.registeringAdminEmail}
               onChange={(event) =>
-                setValues({ ...values, adminEmail: event.target.value })
+                setValues({
+                  ...values,
+                  registeringAdminEmail: event.target.value,
+                })
               }
-              error={errors.adminEmail}
+              error={errors.registeringAdminEmail}
             />
           </fieldset>
           <fieldset>
@@ -248,23 +257,27 @@ export default function OrgRegisterForm() {
               <label className="org-consent">
                 <input
                   type="checkbox"
-                  checked={values.acceptedTermOfService}
+                  checked={values.acceptedTermsOfService}
                   onChange={(event) =>
                     setValues({
                       ...values,
-                      acceptedTermOfService: event.target.checked,
+                      acceptedTermsOfService: event.target.checked,
                     })
                   }
-                  aria-invalid={errors.acceptedTermOfService ? true : undefined}
+                  aria-invalid={
+                    errors.acceptedTermsOfService ? true : undefined
+                  }
                   aria-describedby={
-                    errors.acceptedTermOfService ? "org-terms-error" : undefined
+                    errors.acceptedTermsOfService
+                      ? "org-terms-error"
+                      : undefined
                   }
                 />
                 I accept the Terms of Service.
               </label>
-              {errors.acceptedTermOfService && (
+              {errors.acceptedTermsOfService && (
                 <div id="org-terms-error" className="form-error">
-                  {errors.acceptedTermOfService}
+                  {errors.acceptedTermsOfService}
                 </div>
               )}
             </div>
@@ -298,38 +311,53 @@ export default function OrgRegisterForm() {
             </div>
           </fieldset>
           <button type="submit" className="button primary auth-wide">
-            Register organisation
+            Continue
           </button>
           <p className="auth-switch">
             Already registered? <Link href="/auth/org/signin">Sign in</Link>
           </p>
         </form>
       )}
-      {step === "Admin Code Sent" && (
+      {step === "Codes Sent" && (
         <Instruction
-          title="Verify Admin Email"
-          message={`A code has been sent to ${values.adminEmail} for verification. Continue to enter the code.`}
+          title="Verify Admin and Organisation Email"
+          message={`A code has been sent to ${values.registeringAdminEmail} and ${values.orgEmail} for verification. Continue to enter the codes.`}
           onContinue={() => setStep("Enter Admin Code")}
+          onBack={() => setStep("Detail Entry")}
         />
       )}
       {step === "Enter Admin Code" && (
         <VerificationCode
-          email={values.adminEmail}
-          onVerify={(code) => handleVerifyCode(code, values.adminEmail, step)}
+          initialCode={verificationData.registeringAdminVerificationCode}
+          outcome="continue"
+          email={values.registeringAdminEmail}
+          onContinue={async (code: string) => {
+            setVerificationData({
+              ...verificationData,
+              registeringAdminVerificationCode: code,
+            });
+            await delayBy(500);
+            setStep("Enter Org Code");
+          }}
+          onBack={() => setStep("Codes Sent")}
           onResend={(email) => handleResendCode(email)}
-        />
-      )}
-      {step === "Org Code Sent" && (
-        <Instruction
-          title="Verify Organisation Email"
-          message={`A code has been sent to ${values.orgEmail} for verification. Continue to enter the code.`}
-          onContinue={() => setStep("Enter Org Code")}
         />
       )}
       {step === "Enter Org Code" && (
         <VerificationCode
+          initialCode={verificationData.orgVerificationCode}
+          outcome="continue"
           email={values.orgEmail}
-          onVerify={(code) => handleVerifyCode(code, values.orgEmail, step)}
+          onContinue={async (code: string) => {
+            const verificationDataObj = {
+              ...verificationData,
+              orgVerificationCode: code,
+            };
+
+            setVerificationData(verificationDataObj);
+            await registerWithCodes(verificationDataObj);
+          }}
+          onBack={() => setStep("Enter Admin Code")}
           onResend={(email) => handleResendCode(email)}
         />
       )}

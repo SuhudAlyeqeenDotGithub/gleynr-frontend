@@ -4,7 +4,6 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { AuthLayout, useAuthAction } from "@/components/auth/auth-form";
-import { signUpWithEmail } from "@/lib/auth/auth";
 import { FormInput } from "@/lib/forms/form-input";
 import {
   userSignUpSchema,

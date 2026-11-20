@@ -5,21 +5,33 @@ import { Loader2 } from "lucide-react";
 import { FormInput } from "@/lib/forms/form-input";
 
 type VerificationCodeProps = {
+  initialCode?: string;
+  outcome: "verify" | "continue";
+  actionButtonText?: string;
   email: string;
-  onVerify: (code: string, email: string) => Promise<void>;
+  onBack?: () => void;
+  onVerify?: (code: string, email: string) => Promise<void>;
+  onContinue?: (code: string) => void;
   onResend: (email: string) => Promise<void>;
   minLength?: number;
   resendCooldownSeconds?: number;
+  disabled?: boolean;
 };
 
 export function VerificationCode({
+  initialCode = "",
+  outcome = "verify",
   email,
   onVerify,
+  onContinue,
+  actionButtonText,
   onResend,
+  onBack,
+  disabled = false,
   minLength = 6,
   resendCooldownSeconds = 30,
 }: VerificationCodeProps) {
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(initialCode);
   const [error, setError] = useState("");
   const [status, setStatus] = useState<
     "idle" | "verifying" | "resending" | "success"
@@ -53,15 +65,23 @@ export function VerificationCode({
     }
     setError("");
     setStatus("verifying");
-    try {
-      await onVerify(code, email);
-    } catch (error: unknown) {
-      setError(
-        error instanceof Error && error.message
-          ? error.message
-          : "Could not verify the code. Try again.",
-      );
+
+    if (outcome === "verify") {
+      try {
+        await onVerify?.(code, email);
+      } catch (error: unknown) {
+        setError(
+          error instanceof Error && error.message
+            ? error.message
+            : "Could not verify the code. Try again.",
+        );
+      }
     }
+
+    if (outcome === "continue") {
+      onContinue?.(code);
+    }
+
     setStatus("idle");
   };
 
@@ -108,18 +128,19 @@ export function VerificationCode({
             setCode(event.target.value);
             setError("");
           }}
-          disabled={busy}
+          disabled={busy || disabled}
           error={error}
         />
         <button
           type="submit"
           className="button primary auth-wide"
-          disabled={busy}
+          disabled={busy || disabled}
         >
           {status === "verifying" && (
             <Loader2 size={14} className="auth-spin" />
           )}
-          Verify code
+          {actionButtonText ||
+            (outcome === "verify" ? "Verify code" : "Submit")}
         </button>
       </form>
       <p className="org-auth-resend">
@@ -134,7 +155,17 @@ export function VerificationCode({
               ? `Resend code in ${remaining}s`
               : "Resend code"}
         </button>
-      </p>
+      </p>{" "}
+      {onBack && (
+        <button
+          type="button"
+          className="button secondary"
+          onClick={onBack}
+          disabled={busy || disabled}
+        >
+          Back
+        </button>
+      )}
     </>
   );
 }

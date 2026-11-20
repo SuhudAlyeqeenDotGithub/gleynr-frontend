@@ -37,39 +37,55 @@ export const orgSignInSchema = z.object({
 
 export type OrgSignIn = z.infer<typeof orgSignInSchema>;
 
-export const orgRegistrationSchema = z
+export const orgRegistrationDetailsSchema = z
   .object({
     orgEmail: emailSchema,
-    orgPhone: z
+    orgPhoneNumber: z
       .string()
       .min(10, "Enter a phone number with at least 10 characters."),
     orgName: z
       .string()
       .min(2, "Enter an organisation name with at least 2 characters."),
     orgCountryCode: z.string().min(2, "Select an organisation country."),
-    adminEmail: emailSchema,
-    adminFullName: z
+
+    registeringAdminEmail: emailSchema,
+    registeringAdminName: z
       .string()
       .min(2, "Enter an administrator name with at least 2 characters."),
-    acceptedTermOfService: z
-      .boolean()
-      .refine((data) => data === true, {
-        message: "You must accept the terms of service.",
-      }),
-    acknowledgedPrivacyPolicy: z
-      .boolean()
-      .refine((data) => data === true, {
-        message: "You must acknowledge the privacy policy.",
-      }),
+
+    acceptedTermsOfService: z.boolean().refine((data) => data === true, {
+      message: "You must accept the terms of service.",
+    }),
+    acknowledgedPrivacyPolicy: z.boolean().refine((data) => data === true, {
+      message: "You must acknowledge the privacy policy.",
+    }),
   })
   .refine(
     (data) =>
-      data.adminEmail.trim().toLowerCase() !==
+      data.registeringAdminEmail.trim().toLowerCase() !==
       data.orgEmail.trim().toLowerCase(),
     {
       message: "Admin email must be different from organization email.",
-      path: ["adminEmail"],
+      path: ["registeringAdminEmail"],
     },
   );
 
-export type OrgRegistration = z.infer<typeof orgRegistrationSchema>;
+export type OrgRegistrationDetails = z.infer<
+  typeof orgRegistrationDetailsSchema
+>;
+
+export const orgRegistrationVerificationDataSchema = z.object({
+  orgVerificationCode: z
+    .string()
+    .min(6, "Enter the verification code sent to your organization."),
+  registeringAdminVerificationCode: z
+    .string()
+    .min(
+      6,
+      "Enter the verification code sent to the registering administrator.",
+    ),
+});
+
+export type OrgRegistrationVerificationData = z.infer<
+  typeof orgRegistrationVerificationDataSchema
+>;
