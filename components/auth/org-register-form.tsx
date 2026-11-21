@@ -73,10 +73,8 @@ export default function OrgRegisterForm() {
     setErrors({});
     setError("");
 
-    // handleSendCode(values.registeringAdminEmail);
-    // handleSendCode(values.orgEmail, "Codes Sent");
-
-    setStep("Codes Sent");
+    handleSendCode(values.registeringAdminEmail);
+    handleSendCode(values.orgEmail, "Codes Sent");
   };
 
   const registerWithCodes = async (
